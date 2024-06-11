@@ -28,7 +28,7 @@ def is_param(d, alphas, betas):
 #   a list of length phi(d) such that the ith entry 
 #   is the tuple of Hodge--Tate weights of M(s*alphas, s*betas)_{dR}
 #   and s is the ith positive integer which is coprime to d
-def hypergeo_weights(d, alphas, betas):
+def hodge_tate_weights(d, alphas, betas):
     weights = []
     n = len(betas)
     for s in range(1,d,1):
@@ -49,7 +49,7 @@ def hypergeo_weights(d, alphas, betas):
 # ouput: True if at every embedding the Hodge numbers are <= 1. False otherwise
 def is_regular(d, alphas, betas):
     n = len(alphas)
-    return all([n == len(set(w)) for w in hypergeo_weights(d, alphas, betas)])
+    return all([n == len(set(w)) for w in hodge_tate_weights(d, alphas, betas)])
 
 # input:
 #   d : positive integer
@@ -77,7 +77,7 @@ def jacobi_weights(d, c1, c2):
 #   of M(alphas, betas) \otimes J_(c_1,c_2)
 def twist_weights(d, c1, c2, alphas, betas):
     jws = jacobi_weights(d,c1,c2)
-    hws = hypergeo_weights(d,alphas,betas)
+    hws = hodge_tate_weights(d,alphas,betas)
     n = len(alphas)
     weights = []
     for x in zip(jws, hws):
@@ -292,7 +292,6 @@ def det_nth_power(d, c1, c2, alphas, betas):
             return False
     return True
 
-
 ##################################
 ### finding special parameters ###
 ##################################
@@ -321,7 +320,7 @@ def is_special(d, alphas, betas, BM_finite = False):
 # output:
 #   a list of hypergeometric parameters of dimension n modulo d satisfying
 #   (BM), (BM_fin), (R), (UM), (D)
-def find_params(d, partition, BM_finite = False, find_all = False):
+def find_params(d, partition, BM_finite = False, find_all = False, determinant = True):
     result = []
     n = sum(partition)
     for vs in itertools.combinations(range(1,d), n + len(partition) - 2):
@@ -331,25 +330,30 @@ def find_params(d, partition, BM_finite = False, find_all = False):
             if j > 0:
                 alphas = alphas + p * (vs[j - 1],)
         lastbeta = (int(d*(d-1)/2) + sum(alphas) - sum(betas)) % d
-        if lastbeta in vs:
+        if lastbeta in vs or lastbeta == 0:
             continue
         else:
             betas = betas + (lastbeta,)
 
         if is_special(d, alphas, betas, BM_finite):
-            searching_twist = True
-            for c1 in range(0,d,1):
-                if not searching_twist:
-                    break
-                for c2 in range(c1,d,1):
+            if not determinant:
+                result.append((d,0,0,0,alphas, betas))
+                if not find_all:
+                    return result
+            else:
+                searching_twist = True
+                for c1 in range(0,d,1):
                     if not searching_twist:
                         break
-                    if ((c1 + c2) % d != 0 and c1 != 0) or (c1 == 0 and c2 == 0):
-                        if det_nth_power(d, c1, c2, alphas, betas):
-                            searching_twist = False
-                            result.append((d, c1, c2, (-c1 - c2) % d, alphas, betas))
-                            if not find_all:
-                                return result #only return first hit (otherwise very very slow)
+                    for c2 in range(c1,d,1):
+                        if not searching_twist:
+                            break
+                        if ((c1 + c2) % d != 0 and c1 != 0) or (c1 == 0 and c2 == 0):
+                            if det_nth_power(d, c1, c2, alphas, betas):
+                                searching_twist = False
+                                result.append((d, c1, c2, (-c1 - c2) % d, alphas, betas))
+                                if not find_all:
+                                    return result #only return first hit (otherwise very very slow)
     return result
 
                        
