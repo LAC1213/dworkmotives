@@ -125,8 +125,8 @@ def has_big_monodromy(d, alphas_tup, betas_tup):
         neg_alphas = shift_alphas.copy()
         neg_betas = shift_betas.copy()
         for i in range(0, n, 1):
-            neg_alphas[i] = -neg_alphas[i]
-            neg_betas[i] = - neg_betas[i]
+            neg_alphas[i] = (-neg_alphas[i]) % d
+            neg_betas[i] = (-neg_betas[i]) % d
         neg_alphas.sort()
         neg_betas.sort()
         if neg_alphas == shift_alphas and neg_betas == shift_betas:
